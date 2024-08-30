@@ -1,3 +1,4 @@
+
 package com.example.chat.chatui
 
 import android.app.Activity
@@ -101,6 +102,7 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
             binding.etChat.text.clear()
         }
 
+
         binding.ivSelect.setOnClickListener {
             checkAndRequestPermissions()
         }
@@ -143,27 +145,29 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
 
     private fun setAdapter() {
         lifecycleScope.launch {
-            chatViewModel.messageList(loggedInUser, uid.toLong()).observe(this@ChatActivity) {
+            chatViewModel.messageList(loggedInUser, uid.toLong()).observe(this@ChatActivity) { messageList ->
                 val layoutManager = binding.rvChatList.layoutManager as LinearLayoutManager
+               // val filterMessageList = messageList.distinct{it.messageId}
                 layoutManager.stackFromEnd = true
                 val lastVisibleItemPosition = layoutManager.findLastCompletelyVisibleItemPosition()
-                chatAdapter = ChatAdapter(it, this@ChatActivity)
+                chatAdapter = ChatAdapter(messageList, this@ChatActivity)
                 binding.rvChatList.adapter = chatAdapter
-                if (it.isNotEmpty()) binding.rvChatList.smoothScrollToPosition(it.size - 1)
-                if (lastVisibleItemPosition == it.size - 2) {
-                    binding.rvChatList.smoothScrollToPosition(it.size - 1)
+                if (messageList.isNotEmpty()) binding.rvChatList.smoothScrollToPosition(messageList.size - 1)
+                if (lastVisibleItemPosition == messageList.size - 2) {
+                    binding.rvChatList.smoothScrollToPosition(messageList.size - 1)
                 }
             }
         }
     }
 
     override fun Mesibo_onMessage(message: MesiboMessage) {
+        val uid = message.profile.uid
         Timber.d("outgoing: ${message.isOutgoing}   incoming : ${message.isIncoming}")
         if (::chatRepository.isInitialized) {
             chatRepository.storeMessage(
                 message,
                 loggedInUser,
-                uid.toLong()
+                uid
             )
             Timber.d("chat repository initialized")
         } else {
@@ -199,11 +203,12 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
     }
 
     override fun Mesibo_onMessageStatus(message: MesiboMessage) {
+        val uid = message.profile.uid
         if (::chatRepository.isInitialized) {
             chatRepository.storeMessage(
                 message,
                 loggedInUser,
-                uid.toLong()
+                uid
             )
             Timber.d("chat repository initialized")
         } else {
@@ -213,11 +218,12 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
     }
 
     override fun Mesibo_onMessageUpdate(message: MesiboMessage) {
+       val uid = message.profile.uid
         if (::chatRepository.isInitialized) {
             chatRepository.storeMessage(
                 message,
                 loggedInUser,
-                uid.toLong()
+              uid
             )
             Timber.d("chat repository initialized")
         } else {

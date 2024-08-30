@@ -3,7 +3,6 @@ package com.example.chat.chatui
 import android.util.Log
 import com.example.chat.api.model.entity.Message
 import com.example.chat.api.model.entity.User
-import com.example.chat.contact.ContactRepository
 import com.example.chat.room.ChatDB
 import com.mesibo.api.Mesibo
 import com.mesibo.api.MesiboMessage
@@ -102,7 +101,7 @@ class ChatRepository @Inject constructor(
     }
 
     suspend fun getMessage(senderId: Long, receiverId: Long) = withContext(Dispatchers.IO) {
-        appDatabase.messageDao().getMessageList(receiverId)
+        appDatabase.messageDao().getMessageList(receiverId,senderId)
     }
 
 

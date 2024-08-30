@@ -28,6 +28,6 @@ interface MessageDao {
     @Insert
     fun saveMessage(message: Message)
 
-    @Query("select * from Message where senderId = :receiverId or ReceiverId = :receiverId ")
-    fun getMessageList( receiverId: Long): LiveData<List<Message>>
+    @Query("select * from Message where (senderId = :receiverId and ReceiverId=:senderId) or (ReceiverId = :receiverId and senderId=:senderId ) ")
+    fun getMessageList(receiverId: Long, senderId: Long): LiveData<List<Message>>
 }
