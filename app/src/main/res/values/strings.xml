@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Chat</string>
+    <string name="login">Login</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="password">Password</string>
+    <string name="signup">SignUp</string>
+    <string name="confirm_password">confirm Password</string>
+    <string name="create_profile">Create Profile</string>
+    <string name="full_name">Full Name</string>
+    <string name="status">Status</string>
+    <string name="submit">Submit</string>
+    <string name="city">City</string>
+    <string name="pincode">PinCode</string>
+    <string name="profile">profile</string>
+    <string name="appToken">l7u5jpv8ckuvhws0a02o3keoomu4ra7g75ubxbyg3hnhmch5x2uffsekejhbn2lg</string>
+    <string name="title_activity_maps">MapsActivity</string>
+    <string name="send">Send</string>
+    <string name="cancel">Cancel</string>
+    <string name="selected_image">Selected Image</string>
+    <string name="share_current_location">Share current location</string>
+    <string name="invite">Invite</string>
+    <string name="capture">Capture</string>
+</resources>
