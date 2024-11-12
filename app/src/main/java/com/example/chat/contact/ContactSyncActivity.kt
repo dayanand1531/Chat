@@ -77,16 +77,16 @@ class ContactSyncActivity : AppCompatActivity() {
             contactSyncViewModel.clearDb()
             finish()
         }
-        readMessageFromDB()
+       // readMessageFromDB()
     }
 
-    private fun readMessageFromDB(){
+   /* private fun readMessageFromDB(){
         val profile = Mesibo.getProfile(loggedUserId)
         Mesibo.setAppInForeground(this, 0, true)
         val mReadSession = profile.createReadSession(MessageHandler())
         mReadSession.enableReadReceipt(true)
         mReadSession.read(100)
-    }
+    }*/
 
     private fun contactAdapter() {
         lifecycleScope.launch {

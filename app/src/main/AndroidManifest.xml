@@ -54,7 +54,7 @@
         <activity
             android:name=".chatui.ChatActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            />
         <activity
             android:name=".profile.MyProfileActivity"
             android:exported="false" />

@@ -6,6 +6,4 @@ import javax.inject.Inject
 
 class LoginRepository @Inject constructor(private val apiService: ApiService){
     suspend fun getAccessToken(accessTokenRequest: AccessTokenRequest) = apiService.getAccessToken(accessTokenRequest)
-
-
 }

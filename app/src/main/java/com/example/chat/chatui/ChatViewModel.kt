@@ -1,13 +1,17 @@
 package com.example.chat.chatui
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
+import com.example.chat.api.model.entity.Message
 import com.example.chat.contact.ContactRepository
 import com.example.chat.util.MessageType
 import com.mesibo.api.Mesibo
 import com.mesibo.api.MesiboMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -15,6 +19,8 @@ import javax.inject.Inject
 class ChatViewModel @Inject constructor(private val chatRepository: ChatRepository,
   private val contactRepository: ContactRepository
 ): ViewModel() {
+    private val _messageList = MutableStateFlow(emptyList<Message>())
+    val messageList : StateFlow<List<Message>> = _messageList
 
 //  fun storeMessage(message: MesiboMessage, loggedInUser: Long, username: String) {
 //    viewModelScope.launch {
@@ -51,6 +57,14 @@ class ChatViewModel @Inject constructor(private val chatRepository: ChatReposito
             mesiboMessage.send()
         }
     }
+
+     fun getMessageList(senderId:Long,receiverId:Long) {
+         viewModelScope.launch {
+              chatRepository.getMessage(senderId,receiverId).asFlow().collect{
+                  _messageList.value = it.distinctBy { it.mid }
+             }
+         }
+     }
 
   suspend fun messageList(senderId:Long, receiverId:Long)=chatRepository.getMessage(senderId,receiverId)
 }

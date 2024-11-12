@@ -19,7 +19,7 @@ fun NavHost(isLogin: Boolean) {
         startDestination = if (isLogin) "contactScreen" else "loginScreen"
     ) {
         composable("loginScreen") {
-            LoginScreen()
+            LoginScreen(navController)
         }
 
         composable("signUpScreen") {

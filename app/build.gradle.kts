@@ -1,3 +1,8 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import org.jetbrains.kotlin.konan.properties.loadProperties
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -20,6 +25,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        val properties =  Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            properties.load( FileInputStream(localPropertiesFile))
+        }
+        val appKey = properties.getProperty("appKey","")
+        buildConfigField("String", "AppKey", "\"${appKey}\"")
     }
 
     buildTypes {
@@ -32,15 +44,21 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
+        buildConfig = true
         dataBinding = true
         viewBinding = true
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.1"
     }
 }
 
@@ -64,6 +82,16 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    //Compose Ui
+    implementation (libs.ui)
+    implementation (libs.androidx.material)
+    implementation (libs.ui.tooling.preview)
+    debugImplementation (libs.androidx.ui.tooling)
+    implementation (libs.androidx.lifecycle.runtime.ktx)
+    implementation (libs.androidx.lifecycle.viewmodel.compose)
+    implementation (libs.androidx.activity.compose)
+    implementation (libs.maps.compose)
 
     //mesibo sdk
     implementation(libs.mesiboAPI)
@@ -93,8 +121,10 @@ dependencies {
     implementation(libs.guava)
     //log
     implementation (libs.timber)
-
-
+    //pull to refresh
+    implementation (libs.accompanist.swiperefresh)
+    //Constraint layout
+    implementation (libs.androidx.constraintlayout.compose)
 }
 kapt {
     correctErrorTypes = true

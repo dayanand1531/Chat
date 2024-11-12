@@ -1,6 +1,7 @@
 package com.example.chat.signup
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
@@ -12,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.databinding.DataBindingUtil
+import com.android.volley.BuildConfig
 import com.example.chat.ChatApplication
 import com.example.chat.R
 import com.example.chat.contact.ContactSyncActivity
@@ -44,7 +46,7 @@ class SignUpActivity : AppCompatActivity() {
         binding.btnSignUp.setOnClickListener {
             validation()
         }
-        tokenObserver()
+       // tokenObserver()
     }
 
     private fun validation() {
@@ -68,48 +70,48 @@ class SignUpActivity : AppCompatActivity() {
         }
     }
 
-    private fun tokenObserver() {
-        loginViewModel.loginResponse.observe(this) {
-            when (it.responseStatus) {
-                ResponseStatus.SUCCESS -> {
-                    val pref = ChatPerference(this)
-                    val isSave =
-                        it.data?.user?.let { loginUser ->
-
-                            pref.storeAcceesToken(loginUser.token)
-                        }
-                    if (isSave == true) {
-                        (applicationContext as ChatApplication).initializeMesibo()
-                        val profile: MesiboProfile? = Mesibo.getSelfProfile()
-                        val isSet = profile?.let {
-                            it.name = binding.etName.text.trim().toString()
-                            it.save()
-                            ChatPerference(this).clear()
-                        }
-
-                        if (isSet == true) {
-                            pref.clear()
-                            finish()
-                        } else {
-                            Timber.d("profiel not set.")
-                        }
-                    }
-                    binding.progressBar.progressLayout.visibility = View.GONE
-
-                }
-
-                ResponseStatus.LOADING -> {
-                    binding.progressBar.progressLayout.visibility = View.VISIBLE
-                }
-
-                ResponseStatus.ERROR -> {
-                    binding.progressBar.progressLayout.visibility = View.GONE
-                    Toast.makeText(this, "${it.message}", Toast.LENGTH_SHORT)
-                        .show()
-                }
-            }
-        }
-    }
+//    private fun tokenObserver() {
+//        loginViewModel.loginResponse.observe(this) {
+//            when (it.responseStatus) {
+//                ResponseStatus.SUCCESS -> {
+//                    val pref = ChatPerference(this)
+//                    val isSave =
+//                        it.data?.user?.let { loginUser ->
+//
+//                            pref.storeAcceesToken(loginUser.token)
+//                        }
+//                    if (isSave == true) {
+//                        (applicationContext as ChatApplication).initializeMesibo()
+//                        val profile: MesiboProfile? = Mesibo.getSelfProfile()
+//                        val isSet = profile?.let {
+//                            it.name = binding.etName.text.trim().toString()
+//                            it.save()
+//                            ChatPerference(this).clear()
+//                        }
+//
+//                        if (isSet == true) {
+//                            pref.clear()
+//                            finish()
+//                        } else {
+//                            Timber.d("profiel not set.")
+//                        }
+//                    }
+//                    binding.progressBar.progressLayout.visibility = View.GONE
+//
+//                }
+//
+//                ResponseStatus.LOADING -> {
+//                    binding.progressBar.progressLayout.visibility = View.VISIBLE
+//                }
+//
+//                ResponseStatus.ERROR -> {
+//                    binding.progressBar.progressLayout.visibility = View.GONE
+//                    Toast.makeText(this, "${it.message}", Toast.LENGTH_SHORT)
+//                        .show()
+//                }
+//            }
+//        }
+//    }
 
     private fun firebaseResgistration(mobile: String, password: String) {
         auth.createUserWithEmailAndPassword(mobile + "@gmail.com", password)
@@ -117,7 +119,7 @@ class SignUpActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
 
                     val user = auth.currentUser
-                    loginViewModel.getAcceesToken(mobile, getString(R.string.appToken))
+                    loginViewModel.getAcceesToken(mobile, com.example.chat.BuildConfig.appKey)
 
                 } else {
 

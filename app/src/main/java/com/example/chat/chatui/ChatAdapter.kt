@@ -1,54 +1,70 @@
 package com.example.chat.chatui
 
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.chat.R
+import com.example.chat.api.model.entity.Message
+import com.example.chat.databinding.ItemReceviedImageBinding
+import com.example.chat.databinding.ItemReceviedLocationBinding
+import com.example.chat.databinding.ItemReceviedMessageBinding
+import com.example.chat.databinding.ItemSendImageBinding
+import com.example.chat.databinding.ItemSendLocationBinding
+import com.example.chat.databinding.ItemSendMessageBinding
 import com.example.chat.map.ReceviedMapViewHolder
 import com.example.chat.map.SendMapViewHolder
 import com.example.chat.util.MessageType
 
 class ChatAdapter(
-    private val messages: List<com.example.chat.api.model.entity.Message>,
     private val context: Context
-) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+) : ListAdapter<Message, RecyclerView.ViewHolder>(MessageItemDiffCallback()) {
 
     override fun getItemViewType(position: Int): Int {
-        val isSend = messages[position].isSent
-        return when (messages[position].messageType) {
+        val message = getItem(position)
+        return when (message.messageType) {
             MessageType.TEXT.value -> {
-                if (!isSend) R.layout.item_recevied_message
+                if (!message.isSent) R.layout.item_recevied_message
                 else R.layout.item_send_message
             }
 
             MessageType.IMAGE.value -> {
-                if (!isSend) R.layout.item_recevied_image
+                if (!message.isSent) R.layout.item_recevied_image
                 else R.layout.item_send_image
             }
 
-            MessageType.LOCATION.value -> if (!isSend) R.layout.item_recevied_location else R.layout.item_send_location
+            MessageType.LOCATION.value ->
+                if (!message.isSent) R.layout.item_recevied_location else R.layout.item_send_location
 
             else -> {
-                Log.d("TAG", "getItemViewType: not found")
+                throw IllegalStateException("Invalid view type")
             }
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(viewType, parent, false)
+        val itemSendMessageBinding =
+            ItemSendMessageBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val itemReceviedMessageBinding =
+            ItemReceviedMessageBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val itemReceviedImageBinding =
+            ItemReceviedImageBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val itemSendImageBinding =
+            ItemSendImageBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val itemSendLocationBinding =
+            ItemSendLocationBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val itemReceviedLocationBinding =
+            ItemReceviedLocationBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return when (viewType) {
-            R.layout.item_send_message -> MessageSendViewHolder(view)
-            R.layout.item_recevied_message -> MessageReceviedViewHolder(view)
-            R.layout.item_recevied_image -> ImageReceviedViewHolder(view)
-            R.layout.item_send_image -> ImageSendViewHolder(view)
-            R.layout.item_recevied_location -> ReceviedMapViewHolder(view)
-            R.layout.item_send_location -> SendMapViewHolder(view)
+            R.layout.item_send_message -> MessageSendViewHolder(itemSendMessageBinding)
+            R.layout.item_recevied_message -> MessageReceviedViewHolder(itemReceviedMessageBinding)
+            R.layout.item_recevied_image -> ImageReceviedViewHolder(itemReceviedImageBinding)
+            R.layout.item_send_image -> ImageSendViewHolder(itemSendImageBinding)
+            R.layout.item_recevied_location -> ReceviedMapViewHolder(itemReceviedLocationBinding)
+            R.layout.item_send_location -> SendMapViewHolder(itemSendLocationBinding)
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
@@ -56,48 +72,59 @@ class ChatAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
-            is MessageSendViewHolder -> holder.bind(messages[position])
-            is MessageReceviedViewHolder -> holder.bind(messages[position])
-            is ImageReceviedViewHolder -> holder.bind(messages[position])
-            is ImageSendViewHolder -> holder.bind(messages[position])
-            is SendMapViewHolder -> holder.bind(context, messages[position])
-            is ReceviedMapViewHolder ->holder.bind(context,messages[position])
+            is MessageSendViewHolder -> holder.bind(getItem(position))
+            is MessageReceviedViewHolder -> holder.bind(getItem(position))
+            is ImageReceviedViewHolder -> holder.bind(getItem(position))
+            is ImageSendViewHolder -> holder.bind(getItem(position))
+            is SendMapViewHolder -> holder.bind(context, getItem(position))
+            is ReceviedMapViewHolder -> holder.bind(context, getItem(position))
         }
     }
 
-    override fun getItemCount(): Int = messages.size
 }
 
 // ViewHolders for each type of message
-class MessageSendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    fun bind(message: com.example.chat.api.model.entity.Message) {
-        val messages = message.message
-        val text = itemView.findViewById<TextView>(R.id.tvSentMessage)
-        text.text = messages
+class MessageSendViewHolder(val binding: ItemSendMessageBinding) :
+    RecyclerView.ViewHolder(binding.root) {
+    fun bind(message: Message) {
+        binding.message = message
     }
 }
 
-class MessageReceviedViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    fun bind(message: com.example.chat.api.model.entity.Message) {
-        val messages = message.message
-        val text = itemView.findViewById<TextView>(R.id.tvReveviedMessage)
-        text.text = messages
+class MessageReceviedViewHolder(val binding: ItemReceviedMessageBinding) :
+    RecyclerView.ViewHolder(binding.root) {
+    fun bind(message: Message) {
+        binding.message = message
     }
 }
 
-class ImageSendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    fun bind(message: com.example.chat.api.model.entity.Message) {
-        val image = itemView.findViewById<ImageView>(R.id.ivSentImg)
-        if (message.isSent)  Glide.with(itemView.context).load(message.imageUrl).into(image)
-        else image.setImageResource(R.drawable.ic_image_24)
+class ImageSendViewHolder(val binding: ItemSendImageBinding) :
+    RecyclerView.ViewHolder(binding.root) {
+    fun bind(message: Message) {
+        binding.message = message
+        if (message.isSent) Glide.with(itemView.context).load(message.imageUrl)
+            .into(binding.ivSentImg)
+        else binding.ivSentImg.setImageResource(R.drawable.ic_image_24)
     }
 }
 
-class ImageReceviedViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    fun bind(message: com.example.chat.api.model.entity.Message) {
-        val image = itemView.findViewById<ImageView>(R.id.ivImg)
-       if (message.imageUrl!=null) Glide.with(itemView.context).load(message.imageUrl).into(image)
-       else image.setImageResource(R.drawable.ic_image_24)
+class ImageReceviedViewHolder(val binding: ItemReceviedImageBinding) :
+    RecyclerView.ViewHolder(binding.root) {
+    fun bind(message: Message) {
+        binding.message = message
+        if (message.imageUrl != null) Glide.with(itemView.context).load(message.imageUrl)
+            .into(binding.ivImg)
+        else binding.ivImg.setImageResource(R.drawable.ic_image_24)
+    }
+}
+
+class MessageItemDiffCallback : DiffUtil.ItemCallback<Message>() {
+    override fun areItemsTheSame(oldItem: Message, newItem: Message): Boolean {
+        return oldItem.messageId == newItem.messageId
+    }
+
+    override fun areContentsTheSame(oldItem: Message, newItem: Message): Boolean {
+        return oldItem == newItem
     }
 }
 

@@ -1,14 +1,11 @@
-
 package com.example.chat.chatui
 
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
@@ -31,7 +28,6 @@ import com.mesibo.api.Mesibo
 import com.mesibo.api.MesiboMessage
 import com.mesibo.api.MesiboPresence
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.ExecutorService
@@ -44,20 +40,17 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
     @Inject
     lateinit var chatRepository: ChatRepository
     private val chatViewModel: ChatViewModel by viewModels()
-    var imageUri: Uri? = null
-    var loggedInUser: Long = 0
-    private val REQUEST_CODE_PICK_IMAGE = 1000
+    private var imageUri: Uri? = null
+    private var loggedInUser: Long = 0
     private val PERMISSION_REQUEST_CODE = 1001
     private lateinit var cameraExecutor: ExecutorService
-
     lateinit var name: String
     private lateinit var uid: String
     private lateinit var username: String
     private lateinit var pickLocationLauncher: ActivityResultLauncher<Intent>
-    private lateinit var pickCapterImageLauncher: ActivityResultLauncher<Intent>
+    private lateinit var pickCaptorImageLauncher: ActivityResultLauncher<Intent>
+    private lateinit var pickImageFromGalleyLaunch: ActivityResultLauncher<Intent>
     private lateinit var binding: ActivityMainBinding
-
-
     private lateinit var chatAdapter: ChatAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,7 +95,6 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
             binding.etChat.text.clear()
         }
 
-
         binding.ivSelect.setOnClickListener {
             checkAndRequestPermissions()
         }
@@ -112,7 +104,7 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
         }
         setAdapter()
         binding.ivCamera.setOnClickListener {
-            pickCapterImageLauncher.launch(Intent(this, CameraActivity::class.java))
+            pickCaptorImageLauncher.launch(Intent(this, CameraActivity::class.java))
         }
 
         pickLocationLauncher =
@@ -121,17 +113,20 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
                     val lat = result.data?.getDoubleExtra("selected_lat", 0.0)
                     val lng = result.data?.getDoubleExtra("selected_lng", 0.0)
                     chatViewModel.sendLocation(lat, lng, username)
-                } else if (result.resultCode == Activity.RESULT_OK) {
-                    val uri = result.data?.getStringExtra("url")
-                    uri?.let {
-                        val uriPath = Uri.parse(it)
-                        Dialog.showImageDialog(uriPath, this, username)
+                }
+            }
+        pickImageFromGalleyLaunch =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == RESULT_OK) {
+                    imageUri = result.data?.data
+                    if (imageUri != null) {
+                        Dialog.showImageDialog(imageUri, this, username)
+                        imageUri = null
                     }
                 }
-
             }
 
-        pickCapterImageLauncher =
+        pickCaptorImageLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
                     val uri = result.data?.getStringExtra("url")
@@ -145,18 +140,22 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
 
     private fun setAdapter() {
         lifecycleScope.launch {
-            chatViewModel.messageList(loggedInUser, uid.toLong()).observe(this@ChatActivity) { messageList ->
-                val layoutManager = binding.rvChatList.layoutManager as LinearLayoutManager
-               // val filterMessageList = messageList.distinct{it.messageId}
-                layoutManager.stackFromEnd = true
-                val lastVisibleItemPosition = layoutManager.findLastCompletelyVisibleItemPosition()
-                chatAdapter = ChatAdapter(messageList, this@ChatActivity)
-                binding.rvChatList.adapter = chatAdapter
-                if (messageList.isNotEmpty()) binding.rvChatList.smoothScrollToPosition(messageList.size - 1)
-                if (lastVisibleItemPosition == messageList.size - 2) {
-                    binding.rvChatList.smoothScrollToPosition(messageList.size - 1)
+            chatViewModel.messageList(loggedInUser, uid.toLong())
+                .observe(this@ChatActivity) { messageList ->
+                    val layoutManager = binding.rvChatList.layoutManager as LinearLayoutManager
+                    val filterMessageList = messageList.distinctBy { it.messageId }
+                    layoutManager.stackFromEnd = true
+                    val lastVisibleItemPosition =
+                        layoutManager.findLastCompletelyVisibleItemPosition()
+                    chatAdapter = ChatAdapter(this@ChatActivity)
+                    binding.rvChatList.adapter = chatAdapter
+                    if (filterMessageList.isNotEmpty()) binding.rvChatList.smoothScrollToPosition(
+                        filterMessageList.size - 1
+                    )
+                    if (lastVisibleItemPosition == filterMessageList.size - 2) {
+                        binding.rvChatList.smoothScrollToPosition(filterMessageList.size - 1)
+                    }
                 }
-            }
         }
     }
 
@@ -218,12 +217,12 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
     }
 
     override fun Mesibo_onMessageUpdate(message: MesiboMessage) {
-       val uid = message.profile.uid
+        val uid = message.profile.uid
         if (::chatRepository.isInitialized) {
             chatRepository.storeMessage(
                 message,
                 loggedInUser,
-              uid
+                uid
             )
             Timber.d("chat repository initialized")
         } else {
@@ -307,7 +306,7 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
     private fun openGallery() {
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
-        startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE)
+        pickImageFromGalleyLaunch.launch(intent)
     }
 
     override fun onRequestPermissionsResult(
@@ -325,20 +324,6 @@ class ChatActivity : AppCompatActivity(), Mesibo.MessageListener, Mesibo.Connect
             }
         }
     }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == REQUEST_CODE_PICK_IMAGE && resultCode == RESULT_OK) {
-            imageUri = data?.data
-            if (imageUri != null) {
-
-                Dialog.showImageDialog(imageUri, this, username)
-                imageUri = null
-            }
-        }
-    }
-
 
     override fun Mesibo_onPresence(p0: MesiboPresence) {
 

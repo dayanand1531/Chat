@@ -1,5 +1,6 @@
 package com.example.chat.signup
 
+import android.content.Context
 import android.text.TextUtils
 import android.widget.Toast
 import androidx.compose.runtime.State
@@ -16,18 +17,19 @@ import com.example.chat.login.LoginRepository
 import com.example.chat.util.Response
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
-   private val loginRepository: LoginRepository
+    private val loginRepository: LoginRepository
 ) : ViewModel(
 ) {
-    private var _loginResponse =
-        MutableLiveData<Response<AccessTokenResponse>>()
-    val loginResponse: LiveData<Response<AccessTokenResponse>>
-        get() = _loginResponse
+    private var _signUpResponse =
+        MutableStateFlow<Response<AccessTokenResponse>>(Response.loading(false))
+    val signUpResponse: StateFlow<Response<AccessTokenResponse>> = _signUpResponse
 
     private val _name = mutableStateOf("")
     val name: State<String> = _name
@@ -56,24 +58,24 @@ class SignUpViewModel @Inject constructor(
         _confirmPassword.value = input
     }
 
-    internal fun getAcceesToken(number: String, appToken: String) {
-        _loginResponse.postValue(Response.loading())
+    private fun getAcceesToken(number: String, appToken: String) {
+        _signUpResponse.value = (Response.loading(true))
         viewModelScope.launch {
             val acceesTokenRequest = accessTokenRequest(number, appToken)
             val result = loginRepository.getAccessToken(acceesTokenRequest)
             if (result.isSuccessful) {
                 if (result.body() != null) {
-                    _loginResponse.postValue(Response.success(data = result.body()!!))
-                } else _loginResponse.postValue(Response.error(result.message()))
+                    _signUpResponse.value = (Response.success(data = result.body()!!, false))
+                } else _signUpResponse.value=(Response.error(result.message(), false))
             } else {
-                _loginResponse.postValue(Response.error(result.message()))
+                _signUpResponse.value=(Response.error(result.message(), false))
             }
         }
     }
 
-    fun Validation():Boolean {
+    fun validation(): Boolean {
         if (isValidName(name.value) && isValidMobile(mobileNo.value) && isValidPassword(password.value) && password.value == confirmPassword.value) {
-                  return true
+            return true
         } else {
             var errorMessage = "Invalid Name, Mobile Number or Password"
             if (!isValidMobile(mobileNo.value)) {
@@ -108,6 +110,19 @@ class SignUpViewModel @Inject constructor(
     private fun isValidPassword(password: String): Boolean {
         val passwordPattern = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#\$%^&+=]).{8,}$")
         return !TextUtils.isEmpty(password) && password.matches(passwordPattern)
+    }
+
+    fun firebaseResgistration() {
+        _signUpResponse.value = (Response.loading(true))
+        val auth = FirebaseAuth.getInstance()
+        auth.createUserWithEmailAndPassword("${_mobileNo.value}@gmail.com", _password.value)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                   // getAcceesToken(_mobileNo.value, com.example.chat.BuildConfig.appKey)
+                } else {
+                    _signUpResponse.value = Response.error("${task.exception?.message}",false)
+                }
+            }
     }
 
 }

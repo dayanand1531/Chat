@@ -6,18 +6,18 @@ import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.example.chat.R
 import com.example.chat.api.model.entity.Message
+import com.example.chat.databinding.ItemSendLocationBinding
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
-class SendMapViewHolder(view: View)  : RecyclerView.ViewHolder(view) {
-    val mapView: MapView = view.findViewById(R.id.mapView)
+class SendMapViewHolder(val binding: ItemSendLocationBinding)  : RecyclerView.ViewHolder(binding.root) {
 
     fun bind(context: Context, message: Message) {
         // Initialize the MapView
-        mapView.onCreate(null)
-        mapView.getMapAsync { googleMap ->
+        binding.mapView.onCreate(null)
+        binding.mapView.getMapAsync { googleMap ->
             // Set up your map here (e.g., set markers, camera position)
             val latLng = LatLng(message.latitude, message.longitude) // Example coordinates
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10f))
@@ -26,22 +26,22 @@ class SendMapViewHolder(view: View)  : RecyclerView.ViewHolder(view) {
     }
 
     fun onDestroy() {
-        mapView.onDestroy()
+        binding.mapView.onDestroy()
     }
 
     fun onResume() {
-        mapView.onResume()
+        binding.mapView.onResume()
     }
 
     fun onPause() {
-        mapView.onPause()
+        binding.mapView.onPause()
     }
 
     fun onLowMemory() {
-        mapView.onLowMemory()
+        binding.mapView.onLowMemory()
     }
 
     fun onSaveInstanceState(outState: Bundle) {
-        mapView.onSaveInstanceState(outState)
+        binding.mapView.onSaveInstanceState(outState)
     }
 }

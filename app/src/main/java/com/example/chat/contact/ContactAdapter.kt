@@ -9,15 +9,9 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.chat.R
 import com.example.chat.api.model.Contact
-import com.example.chat.api.model.entity.User
 
-private const val TYPE_A = 1
-private const val TYPE_B = 2
-
-class ContactAdapter(
-
-) : ListAdapter<Contact, ContactAdapter.ContactViewHolder>(ContactItemDiffCallback()) {
-
+class ContactAdapter :
+    ListAdapter<Contact, ContactAdapter.ContactViewHolder>(ContactItemDiffCallback()) {
 
     override fun onCreateViewHolder(
         parent: ViewGroup,

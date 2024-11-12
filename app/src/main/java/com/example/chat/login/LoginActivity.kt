@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -14,6 +15,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.databinding.DataBindingUtil
 import com.example.chat.ChatApplication
+import com.example.chat.NavHost
 import com.example.chat.R
 import com.example.chat.contact.ContactSyncActivity
 import com.example.chat.databinding.ActivityLoginBinding
@@ -30,14 +32,20 @@ class LoginActivity : AppCompatActivity() {
     private val loginViewModel: LoginViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+       /* enableEdgeToEdge()
         binding = DataBindingUtil.setContentView(this, R.layout.activity_login)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }*/
+        setContent{
+            val accessToken = ChatPerference(this).getacceesToken()
+           val isLogin = accessToken != null
+            NavHost(isLogin)
         }
-        auth = FirebaseAuth.getInstance()
+
+      /* auth = FirebaseAuth.getInstance()
         tokenObserver()
         binding.btnLogin.setOnClickListener {
             logIn()
@@ -45,11 +53,11 @@ class LoginActivity : AppCompatActivity() {
         binding.tvSignUp.setOnClickListener {
             val intent = Intent(this, SignUpActivity::class.java)
             getResult.launch(intent)
-        }
+        }*/
 
     }
 
-    private fun tokenObserver() {
+ /*   private fun tokenObserver() {
         loginViewModel.loginResponse.observe(this) {
             when (it.responseStatus) {
                 ResponseStatus.SUCCESS -> {
@@ -77,7 +85,7 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         }
-    }
+    }*/
 
     private val getResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -96,7 +104,7 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     Toast.makeText(this, "Sign In Successful!", Toast.LENGTH_SHORT).show()
-                    loginViewModel.getAcceesToken(mobileNumber, getString(R.string.appToken))
+                    loginViewModel.getAcceesToken(mobileNumber, com.example.chat.BuildConfig.appKey)
                 } else {
                     Toast.makeText(
                         this,
@@ -110,11 +118,11 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        val accessToken = ChatPerference(this).getacceesToken()
-        if (accessToken != null) {
-            (applicationContext as ChatApplication).initializeMesibo()
-            startActivity(Intent(this, ContactSyncActivity::class.java))
-            finish()
-        }
+//        val accessToken = ChatPerference(this).getacceesToken()
+//        if (accessToken != null) {
+//            (applicationContext as ChatApplication).initializeMesibo()
+//            startActivity(Intent(this, ContactSyncActivity::class.java))
+//            finish()
+//        }
     }
 }
